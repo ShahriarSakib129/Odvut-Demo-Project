@@ -1,40 +1,202 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>ODVUT Crypto API Demo</title>
-<style>
-body{margin:0;min-height:100vh;display:grid;place-items:center;background:#111318;color:#f5f5f5;font-family:Arial}
-.card{width:min(92%,460px);padding:28px;border:1px solid #30343d;border-radius:16px;background:#191c22}
-.price{font-size:38px;font-weight:bold;margin:22px 0 8px}.muted{color:#aeb4c0;font-size:14px}
-button{width:100%;padding:13px;border:0;border-radius:9px;background:#f0b90b;color:#111;font-weight:bold;cursor:pointer;margin-top:18px}
-pre{white-space:pre-wrap;word-break:break-word;background:#0d0f13;padding:12px;border-radius:8px;font-size:13px;margin-top:18px}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>ODVUT Crypto API Demo</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #111;
+            color: white;
+            text-align: center;
+            padding: 40px 15px;
+        }
+
+        .box {
+            max-width: 500px;
+            margin: auto;
+            background: #1c1c1c;
+            padding: 25px;
+            border-radius: 15px;
+        }
+
+        h1 {
+            margin-bottom: 25px;
+        }
+
+        .status {
+            margin: 15px 0;
+            padding: 12px;
+            border-radius: 8px;
+            background: #292929;
+        }
+
+        .price {
+            font-size: 32px;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .error {
+            color: #ff6b6b;
+            margin-top: 15px;
+        }
+
+        .source {
+            color: #aaa;
+            margin-top: 8px;
+        }
+    </style>
 </head>
+
 <body>
-<main class="card">
-<h1>ODVUT Crypto API Demo</h1>
-<div id="status">Backend: ⚪ Not checked</div>
-<div id="price" class="price">BTC/USDT: —</div>
-<div id="time" class="muted">No price fetched yet</div>
-<button onclick="loadPrice()">Get Live BTC Price</button>
-<pre id="result">The backend will fetch BTCUSDT from Binance.</pre>
-</main>
+
+<div class="box">
+
+    <h1>ODVUT Crypto API Demo</h1>
+
+    <div class="status" id="backend">
+        Backend: Checking...
+    </div>
+
+    <h2>BTC/USDT</h2>
+
+    <div class="price" id="price">
+        —
+    </div>
+
+    <div class="source" id="source">
+        Source: —
+    </div>
+
+    <button onclick="getPrice()">
+        Get Live BTC Price
+    </button>
+
+    <div class="error" id="error"></div>
+
+</div>
+
+
 <script>
-async function loadPrice(){
- const status=document.getElementById("status"),price=document.getElementById("price");
- const time=document.getElementById("time"),result=document.getElementById("result");
- status.textContent="Backend: 🟡 Fetching..."; result.textContent="Loading...";
- try{
-  const response=await fetch("/api/price"); const data=await response.json();
-  if(!response.ok) throw new Error(data.error||"HTTP "+response.status);
-  status.textContent="Backend: 🟢 Online";
-  price.textContent="BTC/USDT: $"+Number(data.price_usdt).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
-  time.textContent="Server time: "+data.server_time;
-  result.textContent=JSON.stringify(data,null,2);
- }catch(e){status.textContent="Backend: 🔴 Error";result.textContent="Error: "+e.message;}
+
+async function checkBackend() {
+
+    try {
+
+        const response =
+            await fetch("/api/status");
+
+        const data =
+            await response.json();
+
+        if (data.status === "online") {
+
+            document.getElementById("backend")
+                .innerHTML =
+                "Backend: 🟢 Online";
+
+        } else {
+
+            document.getElementById("backend")
+                .innerHTML =
+                "Backend: 🔴 Error";
+        }
+
+    } catch (error) {
+
+        document.getElementById("backend")
+            .innerHTML =
+            "Backend: 🔴 Error";
+    }
 }
+
+
+async function getPrice() {
+
+    const priceElement =
+        document.getElementById("price");
+
+    const sourceElement =
+        document.getElementById("source");
+
+    const errorElement =
+        document.getElementById("error");
+
+    priceElement.innerText = "Loading...";
+    sourceElement.innerText = "Source: —";
+    errorElement.innerText = "";
+
+    try {
+
+        const response =
+            await fetch("/api/price");
+
+        const data =
+            await response.json();
+
+        console.log("Price API:", data);
+
+        if (data.status === "success") {
+
+            priceElement.innerText =
+                "$" +
+                Number(data.price)
+                    .toLocaleString(
+                        undefined,
+                        {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                        }
+                    );
+
+            sourceElement.innerText =
+                "Source: " +
+                data.source;
+
+            if (data.fallback) {
+
+                errorElement.innerText =
+                    "Binance unavailable — using Bybit fallback.";
+
+            }
+
+        } else {
+
+            priceElement.innerText = "—";
+
+            errorElement.innerText =
+                "Binance: " +
+                (data.binance_error || "Failed") +
+                " | Bybit: " +
+                (data.bybit_error || "Failed");
+        }
+
+    } catch (error) {
+
+        priceElement.innerText = "—";
+
+        errorElement.innerText =
+            "Request failed: " + error.message;
+    }
+}
+
+
+checkBackend();
+
 </script>
+
 </body>
 </html>
