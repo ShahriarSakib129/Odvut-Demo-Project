@@ -1,77 +1,40 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ODVUT Backend Demo</title>
-  <style>
-    body {
-      margin: 0;
-      min-height: 100vh;
-      display: grid;
-      place-items: center;
-      background: #111318;
-      color: #f5f5f5;
-      font-family: Arial, sans-serif;
-    }
-    .card {
-      width: min(90%, 430px);
-      padding: 28px;
-      border: 1px solid #30343d;
-      border-radius: 16px;
-      background: #191c22;
-      box-sizing: border-box;
-    }
-    h1 { margin-top: 0; }
-    #status { margin: 20px 0; font-size: 18px; }
-    button {
-      width: 100%;
-      padding: 13px;
-      border: 0;
-      border-radius: 9px;
-      background: #f0b90b;
-      color: #111;
-      font-weight: bold;
-      cursor: pointer;
-    }
-    pre {
-      white-space: pre-wrap;
-      word-break: break-word;
-      background: #0d0f13;
-      padding: 12px;
-      border-radius: 8px;
-      font-size: 13px;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>ODVUT Crypto API Demo</title>
+<style>
+body{margin:0;min-height:100vh;display:grid;place-items:center;background:#111318;color:#f5f5f5;font-family:Arial}
+.card{width:min(92%,460px);padding:28px;border:1px solid #30343d;border-radius:16px;background:#191c22}
+.price{font-size:38px;font-weight:bold;margin:22px 0 8px}.muted{color:#aeb4c0;font-size:14px}
+button{width:100%;padding:13px;border:0;border-radius:9px;background:#f0b90b;color:#111;font-weight:bold;cursor:pointer;margin-top:18px}
+pre{white-space:pre-wrap;word-break:break-word;background:#0d0f13;padding:12px;border-radius:8px;font-size:13px;margin-top:18px}
+</style>
 </head>
 <body>
-  <main class="card">
-    <h1>ODVUT Backend Demo</h1>
-    <div id="status">Backend Status: ⚪ Not checked</div>
-    <button onclick="checkBackend()">Check Backend</button>
-    <pre id="result">Press the button to test the backend API.</pre>
-  </main>
-
-  <script>
-    async function checkBackend() {
-      const status = document.getElementById("status");
-      const result = document.getElementById("result");
-
-      status.textContent = "Backend Status: 🟡 Checking...";
-
-      try {
-        const response = await fetch("/api/status");
-        const data = await response.json();
-
-        if (!response.ok) throw new Error("HTTP " + response.status);
-
-        status.textContent = "Backend Status: 🟢 Online";
-        result.textContent = JSON.stringify(data, null, 2);
-      } catch (error) {
-        status.textContent = "Backend Status: 🔴 Offline";
-        result.textContent = "Error: " + error.message;
-      }
-    }
-  </script>
+<main class="card">
+<h1>ODVUT Crypto API Demo</h1>
+<div id="status">Backend: ⚪ Not checked</div>
+<div id="price" class="price">BTC/USDT: —</div>
+<div id="time" class="muted">No price fetched yet</div>
+<button onclick="loadPrice()">Get Live BTC Price</button>
+<pre id="result">The backend will fetch BTCUSDT from Binance.</pre>
+</main>
+<script>
+async function loadPrice(){
+ const status=document.getElementById("status"),price=document.getElementById("price");
+ const time=document.getElementById("time"),result=document.getElementById("result");
+ status.textContent="Backend: 🟡 Fetching..."; result.textContent="Loading...";
+ try{
+  const response=await fetch("/api/price"); const data=await response.json();
+  if(!response.ok) throw new Error(data.error||"HTTP "+response.status);
+  status.textContent="Backend: 🟢 Online";
+  price.textContent="BTC/USDT: $"+Number(data.price_usdt).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
+  time.textContent="Server time: "+data.server_time;
+  result.textContent=JSON.stringify(data,null,2);
+ }catch(e){status.textContent="Backend: 🔴 Error";result.textContent="Error: "+e.message;}
+}
+</script>
 </body>
 </html>
